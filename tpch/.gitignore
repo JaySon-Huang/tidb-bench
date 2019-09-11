@@ -1,0 +1,4 @@
+*.sql
+dbgen/*.tbl
+dbgen/dbgen
+dbgen/qgen
