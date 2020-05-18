@@ -52,30 +52,40 @@ func main() {
 	queryDirFlag := flag.String("dir", "./queries", "The directory where the query SQLs are")
 
 	flag.Parse()
-	files, err := ioutil.ReadDir(*queryDirFlag)
-	if err != nil {
-		fmt.Printf("error occurred while reading directory: %v\n", err)
-		os.Exit(-1)
-	}
 
-	// executing all queries.
 	allEngines := []string{"tikv,tiflash", "tikv", "tiflash"}
 	for _, engine := range allEngines {
 		fmt.Printf("Running with engine=%s\n", engine)
-		for _, file := range files {
-			f := filepath.Join(*queryDirFlag, file.Name())
+		// executing all queries.
+		for iQuery := 1; iQuery <= 22; iQuery++ {
+			filename := fmt.Sprintf("%d.sql", iQuery)
+			f := filepath.Join(*queryDirFlag, filename)
 			fmt.Printf("%v\n", f)
-			totCost := time.Duration(0)
+			var totCost, minCost, maxCost time.Duration
 			// each query run for tpchCountFlag times.
 			for i := 0; i < *tpchCountFlag; i++ {
 				dur, err := runQuery(*tidbAddrFlag, *tidbPortFlag, *tpchDatabaseFlag, f, engine)
 				if err != nil {
 					fmt.Printf("error occurred while executing query from %s, error: %s\n", f, err)
 				}
-				totCost += dur
-				fmt.Printf("%v's %vth run finished in %v\n", file.Name(), i, dur)
+				fmt.Printf("%v's %vth run finished in %.2f\n", filename, i, dur.Seconds())
+				if i == 0 {
+					totCost = dur
+					minCost = dur
+					maxCost = dur
+				} else {
+					if minCost > dur {
+						minCost = dur
+					}
+					if maxCost < dur {
+						maxCost = dur
+					}
+					totCost += dur
+				}
 			}
-			fmt.Printf("%v costs: %v\n", file.Name(), 1.0*totCost.Milliseconds()/int64(*tpchCountFlag))
+			avgCost := float64(totCost.Milliseconds()/int64(*tpchCountFlag)) / 1000.0
+			fmt.Printf("%v avg: %.2f, min: %.2f, max: %.2f\n", filename, avgCost, minCost.Seconds(), maxCost.Seconds())
 		}
+		fmt.Println("=========")
 	}
 }
