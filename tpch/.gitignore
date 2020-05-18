@@ -2,3 +2,4 @@
 dbgen/*.tbl
 dbgen/dbgen
 dbgen/qgen
+bin/

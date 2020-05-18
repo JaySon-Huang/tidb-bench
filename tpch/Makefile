@@ -21,6 +21,9 @@ load:
 watch:
 	watch -n 1 "mysql -h $(host) -P $(port) -u $(username) --local-infile=1 -D tpch < alltable.count"
 
+build:
+	go build -o ./bin/bench main.go
+
 cleansql:
 	mv dss.sql dss.sqt
 	rm -rf *.sql
