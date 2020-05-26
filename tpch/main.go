@@ -22,9 +22,14 @@ func runQuery(tidbAddr string, tidbPort int, tidbDatabase string, queryFile stri
 
 	query := string(queryContext)
 
-	variables := "set @@session.tidb_allow_batch_cop = 1;set @@session.tidb_opt_distinct_agg_push_down = 1;set @@session.tidb_distsql_scan_concurrency = 30;set @@session.tidb_opt_agg_push_down = 0;"
+	//variables := "set @@session.tidb_allow_batch_cop = 1;set @@session.tidb_opt_distinct_agg_push_down = 1;set @@session.tidb_distsql_scan_concurrency = 30;set @@session.tidb_opt_agg_push_down = 0;"
+    variables := "set @@session.tidb_allow_batch_cop = 1;set @@session.tidb_opt_distinct_agg_push_down = 1;set @@session.tidb_distsql_scan_concurrency = 30;set @@session.tidb_projection_concurrency = 16;set @@session.tidb_hashagg_partial_concurrency = 16;set @@session.tidb_hashagg_final_concurrency = 16;set @@session.tidb_hash_join_concurrency = 16;set @@session.tidb_index_lookup_concurrency = 16;set @@session.tidb_index_lookup_join_concurrency = 16;"
 
 	isolation := "set @@session.tidb_isolation_read_engines=\"" + engine + "\";"
+
+    //sql := variables + isolation + query;
+    //fmt.Printf("Query: %s\n", sql)
+    fmt.Printf("Variables: %s\n", variables + isolation)
 
 	cmd := exec.Command("mysql",
 		fmt.Sprintf("-h%v", tidbAddr),
@@ -33,7 +38,7 @@ func runQuery(tidbAddr string, tidbPort int, tidbDatabase string, queryFile stri
 		fmt.Sprintf("-D%v", tidbDatabase),
 		fmt.Sprintf("--local_infile"),
 		"--comments",
-		"-e", variables+isolation+query,
+		"-e", sql,
 	)
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -53,7 +58,7 @@ func main() {
 
 	flag.Parse()
 
-	allEngines := []string{"tikv,tiflash", "tikv", "tiflash"}
+	allEngines := []string{"tikv,tiflash", "tiflash", "tikv"}
 	for _, engine := range allEngines {
 		fmt.Printf("Running with engine=%s\n", engine)
 		// executing all queries.
