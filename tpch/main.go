@@ -22,14 +22,21 @@ func runQuery(tidbAddr string, tidbPort int, tidbDatabase string, queryFile stri
 
 	query := string(queryContext)
 
-	//variables := "set @@session.tidb_allow_batch_cop = 1;set @@session.tidb_opt_distinct_agg_push_down = 1;set @@session.tidb_distsql_scan_concurrency = 30;set @@session.tidb_opt_agg_push_down = 0;"
+    // v4.0
     variables := "set @@session.tidb_allow_batch_cop = 1;set @@session.tidb_opt_distinct_agg_push_down = 1;set @@session.tidb_distsql_scan_concurrency = 30;set @@session.tidb_projection_concurrency = 16;set @@session.tidb_hashagg_partial_concurrency = 16;set @@session.tidb_hashagg_final_concurrency = 16;set @@session.tidb_hash_join_concurrency = 16;set @@session.tidb_index_lookup_concurrency = 16;set @@session.tidb_index_lookup_join_concurrency = 16;"
 
 	isolation := "set @@session.tidb_isolation_read_engines=\"" + engine + "\";"
-
-    //sql := variables + isolation + query;
-    //fmt.Printf("Query: %s\n", sql)
+    sql := variables + isolation + query;
     fmt.Printf("Variables: %s\n", variables + isolation)
+
+    // v3.0
+    /*
+    variables := "set @@session.tidb_distsql_scan_concurrency = 30;set @@session.tidb_projection_concurrency = 16;set @@session.tidb_hashagg_partial_concurrency = 16;set @@session.tidb_hashagg_final_concurrency = 16;set @@session.tidb_hash_join_concurrency = 16;set @@session.tidb_index_lookup_concurrency = 16;set @@session.tidb_index_lookup_join_concurrency = 16;"
+    fmt.Printf("Variables: %s\n", variables)
+    sql := variables + query;
+    */
+
+    //fmt.Printf("Query: %s\n", sql)
 
 	cmd := exec.Command("mysql",
 		fmt.Sprintf("-h%v", tidbAddr),
